@@ -24,7 +24,6 @@ import Switch from "react-native-reanimated2-switch"
 
 ```js
 <Switch
-  value={switchValue}
   activeBackgroundColor='blue' 
   inactiveBackgroundColor='green'
 />
