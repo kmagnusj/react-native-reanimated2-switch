@@ -1,318 +1,128 @@
-import React, { PureComponent } from 'react';
-import PropTypes from 'prop-types';
+
+import React, { useEffect, useRef, useState } from 'react'
+import { StyleSheet } from 'react-native'
 import {
-  Animated,
-  Easing,
-  I18nManager,
-  Image,
-  PanResponder,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+  PanGestureHandler,
+  State,
+  TapGestureHandler,
+} from 'react-native-gesture-handler'
+import Animated, {
+  interpolateColor,
+  runOnJS,
+  useAnimatedGestureHandler,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated'
+import { clamp, snapPoint } from 'react-native-redash'
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen'
 
-const styles = {
-  button: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  animated: {
-    borderWidth: 0,
-    position: 'absolute',
-  },
-};
-
-export default class SwitchSelector extends PureComponent {
-  constructor(props) {
-    super(props);
-    const { initial, options } = props;
-    this.state = {
-      selected: initial,
-    };
-
-    this.panResponder = PanResponder.create({
-      onStartShouldSetPanResponder: this.shouldSetResponder,
-      onMoveShouldSetPanResponder: this.shouldSetResponder,
-      onPanResponderRelease: this.responderEnd,
-      onPanResponderTerminate: this.responderEnd,
-    });
-
-    this.animatedValue = new Animated.Value(
-      initial
-        ? I18nManager.isRTL
-          ? -(initial / options.length)
-          : initial / options.length
-        : 0,
-    );
-  }
-
-  componentDidUpdate(prevProps) {
-    const { value, disableValueChangeOnPress } = this.props;
-    if (prevProps.value !== value) {
-      this.toggleItem(value, !disableValueChangeOnPress);
-    }
-  }
-
-  getSwipeDirection(gestureState) {
-    const { dx, dy, vy } = gestureState;
-    // 0.1 velocity
-    if (Math.abs(vy) > 0.1 && Math.abs(dx) < 80) {
-      return dy > 0 ? 'UP' : 'DOWN';
-    }
-    return null;
-  }
-
-  getBgColor() {
-    const { selected } = this.state;
-    const { options, buttonColor } = this.props;
-    if (selected === -1) {
-      return 'transparent';
-    }
-    return options[selected].activeColor || buttonColor;
-  }
-
-  responderEnd = (evt, gestureState) => {
-    const { disabled, options } = this.props;
-    const { selected } = this.state;
-
-    if (disabled) return;
-    const swipeDirection = this.getSwipeDirection(gestureState);
-    if (
-      swipeDirection === 'UP'
-      && selected < options.length - 1
-    ) {
-      this.toggleItem(selected + 1);
-    } else if (swipeDirection === 'DOWN' && selected > 0) {
-      this.toggleItem(selected - 1);
-    }
-  };
-
-  shouldSetResponder = (evt, gestureState) => evt.nativeEvent.touches.length === 1
-    && !(Math.abs(gestureState.dx) < 5 && Math.abs(gestureState.dy) < 5);
-
-  animate = (value, last) => {
-    const { animationDuration } = this.props;
-    this.animatedValue.setValue(last);
-    Animated.timing(this.animatedValue, {
-      toValue: value,
-      duration: animationDuration,
-      easing: Easing.cubic,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  toggleItem = (index, callOnPress = true) => {
-    const { selected } = this.state;
-    const { options, returnObject, onPress } = this.props;
-    if (options.length <= 1 || index === null || isNaN(index)) return;
-    this.animate(
-      I18nManager.isRTL ? -(index / options.length) : index / options.length,
-      I18nManager.isRTL
-        ? -(selected / options.length)
-        : selected / options.length,
-    );
-    if (callOnPress && onPress) {
-      onPress(returnObject ? options[index] : options[index].value);
-    } else {
-      console.log('Call onPress with value: ', options[index].value);
-    }
-    this.setState({ selected: index });
-  };
-
-  render() {
-    const {
-      style,
-      textStyle,
-      selectedTextStyle,
-      textContainerStyle,
-      selectedTextContainerStyle,
-      imageStyle,
-      textColor,
-      selectedColor,
-      fontSize,
-      backgroundColor,
-      borderColor,
-      borderRadius,
-      borderWidth,
-      hasPadding,
-      valuePadding,
-      height,
-      bold,
-      disabled,
-      buttonMargin,
-      options,
-    } = this.props;
-
-    const { selected, sliderHeight } = this.state;
-
-    const optionsMap = options.map((element, index) => {
-      const isSelected = selected === index;
-
-      return (
-        <TouchableOpacity
-          key={index}
-          disabled={disabled}
-          style={[
-            styles.button,
-            isSelected ? selectedTextContainerStyle : textContainerStyle,
-          ]}
-          onPress={() => this.toggleItem(index)}
-        >
-          {typeof element.customIcon === 'function'
-            ? element.customIcon(isSelected)
-            : element.customIcon}
-          {element.imageIcon && (
-            <Image
-              source={element.imageIcon}
-              style={[
-                {
-                  height: 30,
-                  width: 30,
-                  tintColor: isSelected ? selectedColor : textColor,
-                },
-                imageStyle,
-              ]}
-            />
-          )}
-          <Text
-            style={[
-              {
-                fontSize,
-                fontWeight: bold ? 'bold' : 'normal',
-                textAlign: 'center',
-                color: isSelected ? selectedColor : textColor,
-                backgroundColor: 'transparent',
-              },
-              isSelected ? selectedTextStyle : textStyle,
-            ]}
-          >
-            {element.label}
-          </Text>
-        </TouchableOpacity>
-      );
-    });
-
-    return (
-      <View style={[{ flexDirection: 'column' }, style]}>
-        <View {...this.panResponder.panHandlers} style={{ flex: 1 }}>
-          <View
-            style={{
-              borderRadius,
-              backgroundColor,
-              height: height + buttonMargin * 2,
-            }}
-            onLayout={(event) => {
-              const { height } = event.nativeEvent.layout;
-              this.setState({
-                sliderHeight: height - (hasPadding ? 2 : 0),
-              });
-            }}
-          >
-            <View
-              style={{
-                flex: 1,
-                flexDirection: 'column',
-                borderColor,
-                borderRadius,
-                borderWidth: hasPadding ? borderWidth : 0,
-                alignItems: 'center',
-              }}
-            >
-              {!!sliderHeight && (
-                <Animated.View
-                  style={[
-                    {
-                      width: '100%',
-                      backgroundColor: this.getBgColor(),
-                      height:
-                        sliderHeight / options.length
-                        - ((hasPadding ? valuePadding : 0) + buttonMargin * 2),
-                      transform: [
-                        {
-                          translateY: this.animatedValue.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [
-                              hasPadding ? valuePadding : 0,
-                              sliderHeight
-                              - (hasPadding ? valuePadding : 0),
-                            ],
-                          }),
-                        },
-                      ],
-                      borderRadius,
-                      margin: buttonMargin,
-                    },
-                    styles.animated,
-                  ]}
-                />
-              )}
-              {optionsMap}
-            </View>
-          </View>
-        </View>
-      </View>
-    );
-  }
+const SWITCH_CONTAINER_WIDTH = Math.min(wp('23%'), 140)
+const SWITCH_CONTAINER_HEIGHT = hp('6%')
+const CIRCLE_WIDTH = hp('6%')
+const BORDER = 0
+const animationConfig = {
+  overshootClamping: true,
 }
 
-SwitchSelector.defaultProps = {
-  style: {},
-  textStyle: {},
-  selectedTextStyle: {},
-  textContainerStyle: {},
-  selectedTextContainerStyle: {},
-  imageStyle: {},
-  options: [],
-  textColor: '#000000',
-  selectedColor: '#FFFFFF',
-  fontSize: 14,
-  backgroundColor: '#FFFFFF',
-  borderColor: '#C9C9C9',
-  borderRadius: 50,
-  borderWidth: 1,
-  hasPadding: false,
-  valuePadding: 1,
-  height: 40,
-  bold: false,
-  buttonMargin: 0,
-  buttonColor: '#BCD635',
-  returnObject: false,
-  animationDuration: 100,
-  disabled: false,
-  disableValueChangeOnPress: false,
-  initial: -1,
-  value: 1,
-  onPress: null,
-};
+const ReanimatedSwitch = ({
+  value, onChange = () => { }, activeBackgroundColor = 'red',
+  inactiveBackgroundColor = 'green', activeIcon = null, inactiveIcon = null, containerStyle = {}
+}) => {
 
-SwitchSelector.propTypes = {
-  style: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
-  textStyle: PropTypes.object,
-  selectedTextStyle: PropTypes.object,
-  textContainerStyle: PropTypes.object,
-  selectedTextContainerStyle: PropTypes.object,
-  imageStyle: PropTypes.object,
-  options: PropTypes.array,
-  textColor: PropTypes.string,
-  selectedColor: PropTypes.string,
-  fontSize: PropTypes.number,
-  backgroundColor: PropTypes.string,
-  borderColor: PropTypes.string,
-  borderRadius: PropTypes.number,
-  borderWidth: PropTypes.number,
-  hasPadding: PropTypes.bool,
-  valuePadding: PropTypes.number,
-  height: PropTypes.number,
-  bold: PropTypes.bool,
-  buttonMargin: PropTypes.number,
-  buttonColor: PropTypes.string,
-  returnObject: PropTypes.bool,
-  animationDuration: PropTypes.number,
-  disabled: PropTypes.bool,
-  disableValueChangeOnPress: PropTypes.bool,
-  initial: PropTypes.number,
-  value: PropTypes.any,
-  onPress: PropTypes.func,
-};
+  const TRACK_CIRCLE_WIDTH = (containerStyle?.width || SWITCH_CONTAINER_WIDTH)
+    - CIRCLE_WIDTH
+    - (containerStyle?.borderWidth || BORDER) * 2
+
+  const [isToggled, setIsToggled] = useState(value)
+  const translateX = useSharedValue(isToggled ? TRACK_CIRCLE_WIDTH : 0)
+
+  useEffect(() => {
+    onChange(isToggled)
+  }, [isToggled])
+
+  const onPress = ({ nativeEvent: { state } }) => {
+    if (state !== State.ACTIVE) return
+    setIsToggled(prevstate => !prevstate)
+    translateX.value = withSpring(isToggled ? 0 : TRACK_CIRCLE_WIDTH, animationConfig)
+  }
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateX: translateX.value }],
+    }
+  })
+
+  const animatedContainerStyle = useAnimatedStyle(() => {
+    return {
+      backgroundColor: interpolateColor(
+        translateX.value,
+        [0, TRACK_CIRCLE_WIDTH],
+        [inactiveBackgroundColor, activeBackgroundColor]
+      ),
+    }
+  })
+
+  const onGestureEvent = useAnimatedGestureHandler({
+    onStart: (_, context) => {
+      context.x = translateX.value
+    },
+    onActive: ({ translationX }, context) => {
+      translateX.value = clamp(translationX + context.x, 0, TRACK_CIRCLE_WIDTH)
+    },
+    onEnd: ({ velocityX }) => {
+      const selectedSnapPoint = snapPoint(translateX.value, velocityX, [
+        0,
+        TRACK_CIRCLE_WIDTH,
+      ])
+      translateX.value = withSpring(selectedSnapPoint, animationConfig)
+      runOnJS(setIsToggled)(selectedSnapPoint !== 0)
+    },
+  })
+
+  const panRef = useRef(null)
+
+  return (
+    <TapGestureHandler waitFor={panRef} onHandlerStateChange={onPress}>
+      <Animated.View style={[animatedContainerStyle, styles.switchContainer, containerStyle]}>
+        <PanGestureHandler ref={panRef} onGestureEvent={onGestureEvent}>
+          <Animated.View
+            style={[animatedStyle, styles.circle, { borderColor: 'transparent' }]}
+          >
+            {isToggled && activeIcon}
+            {!isToggled && inactiveIcon}
+          </Animated.View>
+        </PanGestureHandler>
+      </Animated.View>
+    </TapGestureHandler>
+  )
+}
+export default ReanimatedSwitch
+
+const styles = StyleSheet.create({
+  switchContainer: {
+    width: SWITCH_CONTAINER_WIDTH,
+    height: SWITCH_CONTAINER_HEIGHT,
+    borderRadius: 999,
+    flexDirection: 'row',
+    paddingLeft: BORDER
+  },
+  circle: {
+    alignSelf: 'center',
+    width: CIRCLE_WIDTH,
+    height: CIRCLE_WIDTH,
+    borderRadius: 999,
+    borderWidth: BORDER,
+    elevation: 18,
+    backgroundColor: 'white',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 9,
+    },
+    shadowOpacity: 0.48,
+    shadowRadius: 11.95,
+  },
+})
