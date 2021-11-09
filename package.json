@@ -1,6 +1,6 @@
 {
     "name": "react-native-reanimated2-switch",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Switch for React Native powered by Reanimated v2.",
     "main": "index.js",
     "scripts": {
@@ -12,11 +12,13 @@
         "url": "git+https://github.com/Alaa-Ben/react-native-reanimated2-switch"
     },
     "keywords": [
-        "react-native", "switch", "reanimated"
+        "react-native",
+        "switch",
+        "reanimated"
     ],
     "author": {
-        "name" : "Alaa Ben El Ahmar",
-        "url" : "https://github.com/Alaa-Ben"
+        "name": "Alaa Ben El Ahmar",
+        "url": "https://github.com/Alaa-Ben"
     },
     "license": "ICS",
     "bugs": {
