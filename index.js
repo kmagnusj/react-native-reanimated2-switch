@@ -25,7 +25,7 @@ const animationConfig = {
   overshootClamping: true,
 }
 
-const ReanimatedSwitch = ({
+const Switch = ({
   value, onChange = () => { }, activeBackgroundColor = 'red',
   inactiveBackgroundColor = 'green', activeIcon = null, inactiveIcon = null, containerStyle = {}
 }) => {
@@ -97,7 +97,7 @@ const ReanimatedSwitch = ({
     </TapGestureHandler>
   )
 }
-export default ReanimatedSwitch
+export default Switch
 
 const styles = StyleSheet.create({
   switchContainer: {
