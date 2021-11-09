@@ -1,4 +1,4 @@
-# SwitchSelector
+# Switch
 
 A switch component powered by Reanimated v2.
 Native animations, color interpolation + supports press and swipe.
@@ -13,7 +13,7 @@ Native animations, color interpolation + supports press and swipe.
 ### Installing
 
 ```Shell
-npm i -s react-native-reanimated2-switch
+npm i -s react-native-reanimated react-native-reanimated2-switch
 ```
 
 ### Usage
