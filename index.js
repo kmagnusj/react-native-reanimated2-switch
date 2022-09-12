@@ -27,11 +27,13 @@ const animationConfig = {
 
 const Switch = ({
   value, onChange = () => { }, activeBackgroundColor = 'red',
-  inactiveBackgroundColor = 'green', activeIcon = null, inactiveIcon = null, containerStyle = {}
+  inactiveBackgroundColor = 'green', activeIcon = null, inactiveIcon = null, containerStyle = {}, circleStyle = {}
 }) => {
 
+  const circleWidth = containerStyle?.width / 2 || CIRCLE_WIDTH
+
   const TRACK_CIRCLE_WIDTH = (containerStyle?.width || SWITCH_CONTAINER_WIDTH)
-    - CIRCLE_WIDTH
+    - circleWidth
     - (containerStyle?.borderWidth || BORDER) * 2
 
   const [isToggled, setIsToggled] = useState(value)
@@ -87,8 +89,8 @@ const Switch = ({
       <Animated.View style={[animatedContainerStyle, styles.switchContainer, containerStyle]}>
         <PanGestureHandler ref={panRef} onGestureEvent={onGestureEvent}>
           <Animated.View
-            style={[animatedStyle, styles.circle, { borderColor: 'transparent' }]}
-          >
+            style={[animatedStyle, styles.circle, { borderColor: 'transparent', width: containerStyle?.width / 2 || CIRCLE_WIDTH, height: containerStyle?.height || CIRCLE_WIDTH }, circleStyle]}
+            >
             {isToggled && activeIcon}
             {!isToggled && inactiveIcon}
           </Animated.View>
