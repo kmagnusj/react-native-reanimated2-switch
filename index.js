@@ -26,7 +26,7 @@ const animationConfig = {
 }
 
 const Switch = ({
-  value, onChange = () => { }, activeBackgroundColor = 'red',
+  testID = '', value, onChange = () => { }, activeBackgroundColor = 'red',
   inactiveBackgroundColor = 'green', activeIcon = null, inactiveIcon = null, containerStyle = {}, circleStyle = {}
 }) => {
 
@@ -85,7 +85,7 @@ const Switch = ({
   const panRef = useRef(null)
 
   return (
-    <TapGestureHandler waitFor={panRef} onHandlerStateChange={onPress}>
+    <TapGestureHandler testID={testID} waitFor={panRef} onHandlerStateChange={onPress}>
       <Animated.View style={[animatedContainerStyle, styles.switchContainer, containerStyle]}>
         <PanGestureHandler ref={panRef} onGestureEvent={onGestureEvent}>
           <Animated.View
